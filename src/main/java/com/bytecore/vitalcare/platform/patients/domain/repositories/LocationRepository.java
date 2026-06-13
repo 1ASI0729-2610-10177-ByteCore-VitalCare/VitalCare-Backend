@@ -8,5 +8,6 @@ import java.util.Optional;
 public interface LocationRepository {
     Optional<Location> findById(Long id);
     List<Location> findByPatchId(Long patchId);
+    List<Location> findAll();
     Location save(Location location);
 }
