@@ -12,4 +12,5 @@ public interface PatchRepository {
     List<Patch> findAll();
     Patch save(Patch patch);
     boolean existsByPatchCode(String patchCode);
+    void deleteById(Long id);
 }

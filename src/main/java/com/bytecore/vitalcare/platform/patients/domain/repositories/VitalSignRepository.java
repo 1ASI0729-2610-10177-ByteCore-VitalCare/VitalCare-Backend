@@ -10,4 +10,5 @@ public interface VitalSignRepository {
     List<VitalSign> findByPatchId(Long patchId);
     List<VitalSign> findAll();
     VitalSign save(VitalSign vitalSign);
+    void deleteById(Long id);
 }

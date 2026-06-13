@@ -11,4 +11,5 @@ public interface PatientRepository {
     List<Patient> findByUserId(Long userId);
     Patient save(Patient patient);
     boolean existsById(Long id);
+    void deleteById(Long id);
 }

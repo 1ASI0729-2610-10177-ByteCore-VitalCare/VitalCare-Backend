@@ -10,4 +10,5 @@ public interface LocationRepository {
     List<Location> findByPatchId(Long patchId);
     List<Location> findAll();
     Location save(Location location);
+    void deleteById(Long id);
 }
