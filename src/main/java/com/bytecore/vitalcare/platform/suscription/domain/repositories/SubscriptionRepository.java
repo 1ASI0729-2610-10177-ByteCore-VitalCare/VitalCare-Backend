@@ -1,14 +1,15 @@
 package com.bytecore.vitalcare.platform.suscription.domain.repositories;
 
 import com.bytecore.vitalcare.platform.suscription.domain.model.aggregates.Subscription;
+import com.bytecore.vitalcare.platform.suscription.domain.model.valueobjects.SubscriptionStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-import java.util.List;
 import java.util.Optional;
 
-public interface SubscriptionRepository {
-    Optional<Subscription> findById(Long id);
+@Repository
+public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
     Optional<Subscription> findByUserId(Long userId);
-    List<Subscription> findAll();
-    Subscription save(Subscription subscription);
+    Optional<Subscription> findFirstByUserIdAndStatus(Long userId, SubscriptionStatus status);
     boolean existsByUserId(Long userId);
 }
