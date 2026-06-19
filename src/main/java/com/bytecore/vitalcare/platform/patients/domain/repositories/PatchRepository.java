@@ -9,6 +9,8 @@ public interface PatchRepository {
     Optional<Patch> findById(Long id);
     Optional<Patch> findByPatchCode(String patchCode);
     List<Patch> findByPatientId(Long patientId);
+    List<Patch> findAll();
     Patch save(Patch patch);
     boolean existsByPatchCode(String patchCode);
+    void deleteById(Long id);
 }

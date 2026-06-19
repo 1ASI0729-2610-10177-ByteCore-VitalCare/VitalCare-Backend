@@ -8,5 +8,7 @@ import java.util.Optional;
 public interface VitalSignRepository {
     Optional<VitalSign> findById(Long id);
     List<VitalSign> findByPatchId(Long patchId);
+    List<VitalSign> findAll();
     VitalSign save(VitalSign vitalSign);
+    void deleteById(Long id);
 }
