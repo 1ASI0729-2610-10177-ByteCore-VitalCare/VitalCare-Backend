@@ -4,7 +4,6 @@ import com.bytecore.vitalcare.platform.shared.interfaces.rest.transform.Response
 import com.bytecore.vitalcare.platform.suscription.application.commandservices.SubscriptionCommandService;
 import com.bytecore.vitalcare.platform.suscription.application.queryservices.SubscriptionQueryService;
 import com.bytecore.vitalcare.platform.suscription.domain.model.queries.GetAllSubscriptionsQuery;
-import com.bytecore.vitalcare.platform.suscription.domain.model.queries.GetSubscriptionByUserIdQuery;
 import com.bytecore.vitalcare.platform.suscription.interfaces.rest.resources.CreateSubscriptionResource;
 import com.bytecore.vitalcare.platform.suscription.interfaces.rest.resources.SubscriptionResource;
 import com.bytecore.vitalcare.platform.suscription.interfaces.rest.transform.CreateSubscriptionCommandFromResourceAssembler;
@@ -56,14 +55,4 @@ public class SubscriptionsController {
         return ResponseEntity.ok(resources);
     }
 
-    @GetMapping("/user/{userId}")
-    @Operation(summary = "Get active subscription by user ID")
-    public ResponseEntity<SubscriptionResource> getSubscriptionByUserId(@PathVariable Long userId) {
-        var query = new GetSubscriptionByUserIdQuery(userId);
-        var subscription = subscriptionQueryService.handle(query);
-        
-        return subscription
-                .map(sub -> ResponseEntity.ok(SubscriptionResourceFromEntityAssembler.toResourceFromEntity(sub)))
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
 }
