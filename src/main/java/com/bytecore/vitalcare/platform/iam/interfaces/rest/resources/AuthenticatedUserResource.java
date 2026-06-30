@@ -4,5 +4,6 @@ public record AuthenticatedUserResource(
         Long id,
         String name,
         String email,
-        String token
+        String token,
+        String created_at
 ) {}

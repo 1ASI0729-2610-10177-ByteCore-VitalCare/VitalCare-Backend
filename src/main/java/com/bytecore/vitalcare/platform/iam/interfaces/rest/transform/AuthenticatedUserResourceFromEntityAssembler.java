@@ -12,6 +12,7 @@ public final class AuthenticatedUserResourceFromEntityAssembler {
                 authenticatedUser.id(),
                 authenticatedUser.name(),
                 authenticatedUser.email(),
-                authenticatedUser.token());
+                authenticatedUser.token(),
+                authenticatedUser.createdAt());
     }
 }

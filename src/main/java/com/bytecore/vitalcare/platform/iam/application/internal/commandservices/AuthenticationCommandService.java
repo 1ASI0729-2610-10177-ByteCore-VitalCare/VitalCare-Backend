@@ -9,6 +9,8 @@ import com.bytecore.vitalcare.platform.shared.application.result.Result;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 @Service
 public class AuthenticationCommandService {
 
@@ -35,7 +37,7 @@ public class AuthenticationCommandService {
         var encodedPassword = this.hashingService.encode(password);
         var user = this.userRepository.save(new User(name, email, encodedPassword));
         var token = this.tokenService.generateToken(user);
-        return Result.success(AuthenticatedUser.fromUserAndToken(user, token));
+        return Result.success(AuthenticatedUser.fromUserAndToken(user, token, Instant.now().toString()));
     }
 
     @Transactional(readOnly = true)
@@ -49,17 +51,18 @@ public class AuthenticationCommandService {
         }
 
         var token = this.tokenService.generateToken(user.get());
-        return Result.success(AuthenticatedUser.fromUserAndToken(user.get(), token));
+        return Result.success(AuthenticatedUser.fromUserAndToken(user.get(), token, Instant.now().toString()));
     }
 
     public record AuthenticatedUser(
             Long id,
             String name,
             String email,
-            String token
+            String token,
+            String createdAt
     ) {
-        static AuthenticatedUser fromUserAndToken(User user, String token) {
-            return new AuthenticatedUser(user.getId(), user.getName(), user.getEmail(), token);
+        static AuthenticatedUser fromUserAndToken(User user, String token, String createdAt) {
+            return new AuthenticatedUser(user.getId(), user.getName(), user.getEmail(), token, createdAt);
         }
     }
 }
