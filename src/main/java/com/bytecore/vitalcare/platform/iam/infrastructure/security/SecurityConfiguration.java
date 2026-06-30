@@ -42,6 +42,8 @@ public class SecurityConfiguration {
                                 "/api/v1/vital_signs/**",
                                 "/api/v1/locations/**",
                                 "/api/v1/notifications/**",
+                                "/api/v1/subscriptions/**",
+                                "/api/v1/alerts/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html")
