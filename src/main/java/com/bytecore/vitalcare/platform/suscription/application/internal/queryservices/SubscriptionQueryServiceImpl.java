@@ -5,6 +5,7 @@ import com.bytecore.vitalcare.platform.suscription.domain.model.aggregates.Subsc
 import com.bytecore.vitalcare.platform.suscription.domain.model.queries.GetAllSubscriptionsQuery;
 import com.bytecore.vitalcare.platform.suscription.domain.model.queries.GetSubscriptionByIdQuery;
 import com.bytecore.vitalcare.platform.suscription.domain.model.queries.GetSubscriptionByUserIdQuery;
+import com.bytecore.vitalcare.platform.suscription.domain.model.queries.GetSubscriptionsByUserIdQuery;
 import com.bytecore.vitalcare.platform.suscription.domain.model.valueobjects.SubscriptionStatus;
 import com.bytecore.vitalcare.platform.suscription.domain.repositories.SubscriptionRepository;
 import org.springframework.stereotype.Service;
@@ -33,5 +34,10 @@ public class SubscriptionQueryServiceImpl implements SubscriptionQueryService {
     @Override
     public Optional<Subscription> handle(GetSubscriptionByUserIdQuery query) {
         return subscriptionRepository.findFirstByUserIdAndStatus(query.userId(), SubscriptionStatus.ACTIVE);
+    }
+
+    @Override
+    public List<Subscription> handle(GetSubscriptionsByUserIdQuery query) {
+        return subscriptionRepository.findAllByUserId(query.userId());
     }
 }

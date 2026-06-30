@@ -5,6 +5,7 @@ import com.bytecore.vitalcare.platform.shared.application.result.Result;
 import com.bytecore.vitalcare.platform.suscription.application.commandservices.SubscriptionCommandService;
 import com.bytecore.vitalcare.platform.suscription.domain.model.aggregates.Subscription;
 import com.bytecore.vitalcare.platform.suscription.domain.model.commands.CreateSubscriptionCommand;
+import com.bytecore.vitalcare.platform.suscription.domain.model.commands.UpdateSubscriptionPlanCommand;
 import com.bytecore.vitalcare.platform.suscription.domain.model.commands.UpdateSubscriptionStatusCommand;
 import com.bytecore.vitalcare.platform.suscription.domain.repositories.SubscriptionRepository;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,16 @@ public class SubscriptionCommandServiceImpl implements SubscriptionCommandServic
     public Result<Subscription, ApplicationError> handle(UpdateSubscriptionStatusCommand command) {
         return subscriptionRepository.findById(command.subscriptionId()).map(subscription -> {
             subscription.setStatus(command.status());
+            var updated = subscriptionRepository.save(subscription);
+            return Result.<Subscription, ApplicationError>success(updated);
+        }).orElseGet(() -> Result.failure(ApplicationError.notFound("Subscription", command.subscriptionId().toString())));
+    }
+
+    @Override
+    public Result<Subscription, ApplicationError> handle(UpdateSubscriptionPlanCommand command) {
+        return subscriptionRepository.findById(command.subscriptionId()).map(subscription -> {
+            subscription.setPlan(command.plan());
+            subscription.setPrice(command.price());
             var updated = subscriptionRepository.save(subscription);
             return Result.<Subscription, ApplicationError>success(updated);
         }).orElseGet(() -> Result.failure(ApplicationError.notFound("Subscription", command.subscriptionId().toString())));

@@ -48,7 +48,7 @@ public class Subscription extends AbstractDomainAggregateRoot<Subscription> {
         this.price = price;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.status = SubscriptionStatus.PENDING;
+        this.status = SubscriptionStatus.ACTIVE;
         this.userId = userId;
     }
 
