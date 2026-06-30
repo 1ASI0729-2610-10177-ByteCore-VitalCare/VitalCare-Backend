@@ -35,14 +35,11 @@ public class SecurityConfiguration {
                         .requestMatchers(
                                 "/api/v1/authentication/**",
                                 "/api/v1/user_preferences/**",
+                                "/api/v1/users/**",
+                                "/api/v1/support_tickets/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
-                                "/swagger-ui.html",
-                                "/users/**",
-                                "/patients/**",
-                                "/subscriptions/**",
-                                "/support/**",
-                                "/profile/**")
+                                "/swagger-ui.html")
                         .permitAll()
                         .anyRequest()
                         .authenticated())
