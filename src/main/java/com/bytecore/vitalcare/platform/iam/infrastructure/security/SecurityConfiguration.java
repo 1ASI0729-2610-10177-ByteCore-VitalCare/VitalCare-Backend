@@ -56,8 +56,9 @@ public class SecurityConfiguration {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList(
+        configuration.setAllowedOriginPatterns(Arrays.asList(
             "https://vital-care-frontend.vercel.app",
+            "https://*.vercel.app",
             "http://localhost:3000",
             "http://localhost:4200"
         ));
