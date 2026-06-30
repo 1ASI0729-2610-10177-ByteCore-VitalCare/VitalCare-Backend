@@ -1,15 +1,20 @@
 package com.bytecore.vitalcare.platform.patients.domain.model.aggregates;
 
 import com.bytecore.vitalcare.platform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+@Entity
+@Table(name = "vital_signs")
 @Getter
 public class VitalSign extends AbstractDomainAggregateRoot<VitalSign> {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Setter private Long id;
     @Setter private LocalDateTime recordedAt;
     @Setter private BigDecimal glucoseLevel;
