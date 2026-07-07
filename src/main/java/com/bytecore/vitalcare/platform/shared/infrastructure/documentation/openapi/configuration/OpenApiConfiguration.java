@@ -51,14 +51,11 @@ public class OpenApiConfiguration {
 
         openApi.servers(List.of(
                 new Server()
+                        .url("https://vitalcare-backend-7y66.onrender.com")
+                        .description("Render Production Environment"),
+                new Server()
                         .url("http://localhost:8080")
-                        .description("Local Development Environment"),
-                new Server()
-                        .url("https://staging-api.vitalcare.bytecore.com")
-                        .description("Staging Environment"),
-                new Server()
-                        .url("https://api.vitalcare.bytecore.com")
-                        .description("Production Environment")
+                        .description("Local Development Environment")
         ));
 
         final String securitySchemeName = "bearerAuth";
