@@ -12,7 +12,6 @@ import lombok.*;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class UserPreference {
-    private Long id;
     private String language;
     private FontSize fontSize;
     private BackgroundColor backgroundColor;
