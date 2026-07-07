@@ -18,15 +18,6 @@ public class UserPreference {
     private boolean emailNotifications;
     private boolean pushNotifications;
 
-    public UserPreference(String language, FontSize fontSize, BackgroundColor backgroundColor,
-                          boolean emailNotifications, boolean pushNotifications) {
-        this.language = language;
-        this.fontSize = fontSize;
-        this.backgroundColor = backgroundColor;
-        this.emailNotifications = emailNotifications;
-        this.pushNotifications = pushNotifications;
-    }
-
     public static UserPreference getDefault() {
         return new UserPreference("en", FontSize.MEDIUM, BackgroundColor.LIGHT, true, true);
     }
