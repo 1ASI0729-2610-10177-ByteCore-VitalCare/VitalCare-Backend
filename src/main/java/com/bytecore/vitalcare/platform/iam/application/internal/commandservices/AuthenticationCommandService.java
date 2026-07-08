@@ -44,9 +44,8 @@ public class AuthenticationCommandService {
     public Result<AuthenticatedUser, ApplicationError> signIn(String email, String password) {
         var user = this.userRepository.findByEmail(email);
         if (user.isEmpty() || !this.hashingService.matches(password, user.get().getPassword())) {
-            return Result.failure(new ApplicationError(
-                    "INVALID_CREDENTIALS",
-                    "Invalid credentials",
+            return Result.failure(ApplicationError.validationError(
+                    "credentials",
                     "Email or password is incorrect"));
         }
 
