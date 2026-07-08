@@ -2,6 +2,7 @@ package com.bytecore.vitalcare.platform.notifications.interfaces.rest;
 
 import com.bytecore.vitalcare.platform.notifications.application.commandservices.AlertCommandService;
 import com.bytecore.vitalcare.platform.notifications.application.queryservices.AlertQueryService;
+import com.bytecore.vitalcare.platform.notifications.domain.model.commands.CreateAlertCommand;
 import com.bytecore.vitalcare.platform.notifications.domain.model.commands.MarkAlertAsReadCommand;
 import com.bytecore.vitalcare.platform.notifications.domain.model.queries.GetAlertByIdQuery;
 import com.bytecore.vitalcare.platform.notifications.domain.model.queries.GetAlertsByUserIdQuery;
@@ -53,8 +54,11 @@ public class AlertsController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createAlert(@RequestBody CreateAlertResource resource) {
-        var command = CreateAlertCommandFromResourceAssembler.toCommandFromResource(resource);
+    public ResponseEntity<?> createAlert(@RequestBody CreateAlertResource resource,
+                                         @AuthenticationPrincipal UserDetailsImpl user) {
+        // The alert always belongs to the authenticated user, never to a body-supplied id.
+        var command = new CreateAlertCommand(resource.type(), resource.description(),
+                user.getId(), resource.patientId());
         var result = alertCommandService.handle(command);
 
         return ResponseEntityAssembler.toResponseEntityFromResult(
@@ -65,7 +69,12 @@ public class AlertsController {
     }
 
     @PatchMapping("/{alertId}/read")
-    public ResponseEntity<?> markAlertAsRead(@PathVariable Long alertId) {
+    public ResponseEntity<?> markAlertAsRead(@PathVariable Long alertId,
+                                             @AuthenticationPrincipal UserDetailsImpl user) {
+        var existing = alertQueryService.handle(new GetAlertByIdQuery(alertId));
+        if (existing.isEmpty() || !existing.get().getUserId().equals(user.getId())) {
+            return ResponseEntity.notFound().build();
+        }
         var command = new MarkAlertAsReadCommand(alertId);
         var result = alertCommandService.handle(command);
 

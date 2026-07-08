@@ -2,6 +2,7 @@ package com.bytecore.vitalcare.platform.patients.interfaces.rest;
 
 import com.bytecore.vitalcare.platform.patients.application.commandservices.PatientCommandService;
 import com.bytecore.vitalcare.platform.patients.application.queryservices.PatientQueryService;
+import com.bytecore.vitalcare.platform.patients.domain.model.commands.CreatePatientCommand;
 import com.bytecore.vitalcare.platform.patients.domain.model.commands.DeletePatientCommand;
 import com.bytecore.vitalcare.platform.patients.domain.model.commands.UpdatePatientCommand;
 import com.bytecore.vitalcare.platform.patients.domain.model.queries.GetPatientByIdQuery;
@@ -53,9 +54,24 @@ public class PatientsController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    /** True only if the patient exists and belongs to the authenticated user. */
+    private boolean owns(Long patientId, Long userId) {
+        return queryService.handle(new GetPatientByIdQuery(patientId))
+                .filter(p -> p.getUserId().equals(userId))
+                .isPresent();
+    }
+
     @PostMapping
-    public ResponseEntity<?> createPatient(@RequestBody CreatePatientResource resource) {
-        var command = CreatePatientCommandFromResourceAssembler.toCommandFromResource(resource);
+    public ResponseEntity<?> createPatient(@RequestBody CreatePatientResource resource,
+                                           @AuthenticationPrincipal UserDetailsImpl user) {
+        // Ownership comes from the token, never from the request body.
+        var command = new CreatePatientCommand(
+                resource.name(),
+                resource.birth_date() != null ? LocalDate.parse(resource.birth_date()) : null,
+                resource.gender() != null ? Gender.valueOf(resource.gender().toUpperCase()) : null,
+                resource.photo(),
+                user.getId()
+        );
         var result = commandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result,
@@ -65,14 +81,18 @@ public class PatientsController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updatePatient(@PathVariable Long id, @RequestBody CreatePatientResource resource) {
+    public ResponseEntity<?> updatePatient(@PathVariable Long id, @RequestBody CreatePatientResource resource,
+                                           @AuthenticationPrincipal UserDetailsImpl user) {
+        if (!owns(id, user.getId())) {
+            return ResponseEntity.notFound().build();
+        }
         var command = new UpdatePatientCommand(
                 id,
                 resource.name(),
                 resource.birth_date() != null ? LocalDate.parse(resource.birth_date()) : null,
                 resource.gender() != null ? Gender.valueOf(resource.gender().toUpperCase()) : null,
                 resource.photo(),
-                resource.users_id()
+                user.getId()
         );
         var result = commandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
@@ -83,7 +103,11 @@ public class PatientsController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deletePatient(@PathVariable Long id) {
+    public ResponseEntity<?> deletePatient(@PathVariable Long id,
+                                           @AuthenticationPrincipal UserDetailsImpl user) {
+        if (!owns(id, user.getId())) {
+            return ResponseEntity.notFound().build();
+        }
         var result = commandService.handle(new DeletePatientCommand(id));
         return result instanceof com.bytecore.vitalcare.platform.shared.application.result.Result.Success<?, ?>
                 ? ResponseEntity.noContent().build()

@@ -7,11 +7,13 @@ import com.bytecore.vitalcare.platform.iam.domain.model.queries.GetSupportTicket
 import com.bytecore.vitalcare.platform.iam.interfaces.rest.resources.CreateSupportTicketResource;
 import com.bytecore.vitalcare.platform.iam.interfaces.rest.resources.SupportTicketResource;
 import com.bytecore.vitalcare.platform.iam.interfaces.rest.transform.SupportTicketResourceFromEntityAssembler;
+import com.bytecore.vitalcare.platform.iam.infrastructure.security.UserDetailsImpl;
 import com.bytecore.vitalcare.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,21 +33,25 @@ public class SupportTicketsController {
     }
 
     @GetMapping
-    public ResponseEntity<List<SupportTicketResource>> getTicketsByUser(@RequestParam Long users_id) {
-        var query = new GetSupportTicketsByUserIdQuery(users_id);
+    public ResponseEntity<List<SupportTicketResource>> getTicketsByUser(
+            @AuthenticationPrincipal UserDetailsImpl user) {
+        var userId = user.getId();
+        var query = new GetSupportTicketsByUserIdQuery(userId);
         var tickets = queryService.handle(query).stream()
-                .map(t -> SupportTicketResourceFromEntityAssembler.toResourceFromEntity(t, users_id))
+                .map(t -> SupportTicketResourceFromEntityAssembler.toResourceFromEntity(t, userId))
                 .toList();
         return ResponseEntity.ok(tickets);
     }
 
     @PostMapping
-    public ResponseEntity<?> createTicket(@RequestBody CreateSupportTicketResource resource) {
-        var command = new CreateSupportTicketCommand(resource.users_id(), resource.subject(), resource.message());
+    public ResponseEntity<?> createTicket(@RequestBody CreateSupportTicketResource resource,
+                                          @AuthenticationPrincipal UserDetailsImpl user) {
+        var userId = user.getId();
+        var command = new CreateSupportTicketCommand(userId, resource.subject(), resource.message());
         var result = commandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result,
-                t -> SupportTicketResourceFromEntityAssembler.toResourceFromEntity(t, resource.users_id()),
+                t -> SupportTicketResourceFromEntityAssembler.toResourceFromEntity(t, userId),
                 HttpStatus.CREATED
         );
     }

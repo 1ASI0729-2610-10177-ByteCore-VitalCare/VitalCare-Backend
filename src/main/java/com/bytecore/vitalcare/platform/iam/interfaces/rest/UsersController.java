@@ -4,9 +4,11 @@ import com.bytecore.vitalcare.platform.iam.application.queryservices.UserQuerySe
 import com.bytecore.vitalcare.platform.iam.domain.model.queries.GetUserByIdQuery;
 import com.bytecore.vitalcare.platform.iam.interfaces.rest.resources.UserResource;
 import com.bytecore.vitalcare.platform.iam.interfaces.rest.transform.UserResourceFromEntityAssembler;
+import com.bytecore.vitalcare.platform.iam.infrastructure.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,10 +23,15 @@ public class UsersController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserResource> getUserById(@PathVariable Long userId) {
+    public ResponseEntity<UserResource> getUserById(@PathVariable Long userId,
+                                                    @AuthenticationPrincipal UserDetailsImpl user) {
+        // A user can only read their own record.
+        if (!userId.equals(user.getId())) {
+            return ResponseEntity.notFound().build();
+        }
         var query = new GetUserByIdQuery(userId);
         return userQueryService.handle(query)
-                .map(user -> ResponseEntity.ok(UserResourceFromEntityAssembler.toResourceFromEntity(user)))
+                .map(found -> ResponseEntity.ok(UserResourceFromEntityAssembler.toResourceFromEntity(found)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 }

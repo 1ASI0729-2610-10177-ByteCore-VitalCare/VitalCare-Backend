@@ -69,8 +69,19 @@ public class PatchesController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    /** True only if the patch exists and its patient belongs to the authenticated user. */
+    private boolean ownsPatch(Long patchId, Long userId) {
+        return queryService.handle(new GetPatchByIdQuery(patchId))
+                .filter(patch -> ownsPatient(patch.getPatientId(), userId))
+                .isPresent();
+    }
+
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody CreatePatchResource resource) {
+    public ResponseEntity<?> create(@RequestBody CreatePatchResource resource,
+                                    @AuthenticationPrincipal UserDetailsImpl user) {
+        if (!ownsPatient(resource.patients_id(), user.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         var command = new LinkPatchCommand(resource.patients_id(), resource.patch_code());
         var result = commandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
@@ -78,7 +89,11 @@ public class PatchesController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody CreatePatchResource resource) {
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody CreatePatchResource resource,
+                                    @AuthenticationPrincipal UserDetailsImpl user) {
+        if (!ownsPatch(id, user.getId())) {
+            return ResponseEntity.notFound().build();
+        }
         var status = resource.status() != null ? PatchStatus.valueOf(resource.status().toUpperCase()) : PatchStatus.ACTIVE;
         var command = new UpdatePatchCommand(id, resource.patch_code(), LocalDateTime.now(), status, resource.patients_id());
         var result = commandService.handle(command);
@@ -87,7 +102,11 @@ public class PatchesController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable Long id,
+                                    @AuthenticationPrincipal UserDetailsImpl user) {
+        if (!ownsPatch(id, user.getId())) {
+            return ResponseEntity.notFound().build();
+        }
         var result = commandService.handle(new DeletePatchCommand(id));
         return result instanceof com.bytecore.vitalcare.platform.shared.application.result.Result.Success<?, ?>
                 ? ResponseEntity.noContent().build()

@@ -73,8 +73,19 @@ public class VitalSignsController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    /** True only if the vital sign exists and its patch chain belongs to the authenticated user. */
+    private boolean ownsVitalSign(Long vitalSignId, Long userId) {
+        return queryService.handle(new GetVitalSignByIdQuery(vitalSignId))
+                .filter(vs -> ownsPatch(vs.getPatchId(), userId))
+                .isPresent();
+    }
+
     @PostMapping
-    public ResponseEntity<?> create(@RequestBody CreateVitalSignResource resource) {
+    public ResponseEntity<?> create(@RequestBody CreateVitalSignResource resource,
+                                    @AuthenticationPrincipal UserDetailsImpl user) {
+        if (!ownsPatch(resource.patches_id(), user.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         var command = new RecordVitalSignCommand(
                 resource.patches_id(), resource.glucose_level(), resource.lactate_concentration(),
                 resource.alcohol_level(), resource.ketones(), resource.blood_pressure(),
@@ -88,7 +99,11 @@ public class VitalSignsController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody CreateVitalSignResource resource) {
+    public ResponseEntity<?> update(@PathVariable Long id, @RequestBody CreateVitalSignResource resource,
+                                    @AuthenticationPrincipal UserDetailsImpl user) {
+        if (!ownsVitalSign(id, user.getId())) {
+            return ResponseEntity.notFound().build();
+        }
         var command = new UpdateVitalSignCommand(
                 id, resource.patches_id(), LocalDateTime.now(),
                 resource.glucose_level(), resource.lactate_concentration(),
@@ -103,7 +118,11 @@ public class VitalSignsController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable Long id) {
+    public ResponseEntity<?> delete(@PathVariable Long id,
+                                    @AuthenticationPrincipal UserDetailsImpl user) {
+        if (!ownsVitalSign(id, user.getId())) {
+            return ResponseEntity.notFound().build();
+        }
         var result = commandService.handle(new DeleteVitalSignCommand(id));
         return result instanceof com.bytecore.vitalcare.platform.shared.application.result.Result.Success<?, ?>
                 ? ResponseEntity.noContent().build()
