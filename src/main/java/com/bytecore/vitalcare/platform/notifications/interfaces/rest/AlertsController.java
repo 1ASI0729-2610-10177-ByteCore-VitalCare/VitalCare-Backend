@@ -3,17 +3,17 @@ package com.bytecore.vitalcare.platform.notifications.interfaces.rest;
 import com.bytecore.vitalcare.platform.notifications.application.commandservices.AlertCommandService;
 import com.bytecore.vitalcare.platform.notifications.application.queryservices.AlertQueryService;
 import com.bytecore.vitalcare.platform.notifications.domain.model.commands.MarkAlertAsReadCommand;
-import com.bytecore.vitalcare.platform.notifications.domain.model.queries.GetAllAlertsQuery;
 import com.bytecore.vitalcare.platform.notifications.domain.model.queries.GetAlertByIdQuery;
-import com.bytecore.vitalcare.platform.notifications.domain.model.queries.GetAlertsByPatientIdQuery;
 import com.bytecore.vitalcare.platform.notifications.domain.model.queries.GetAlertsByUserIdQuery;
 import com.bytecore.vitalcare.platform.notifications.interfaces.rest.resources.AlertResource;
 import com.bytecore.vitalcare.platform.notifications.interfaces.rest.resources.CreateAlertResource;
 import com.bytecore.vitalcare.platform.notifications.interfaces.rest.transform.AlertResourceFromEntityAssembler;
 import com.bytecore.vitalcare.platform.notifications.interfaces.rest.transform.CreateAlertCommandFromResourceAssembler;
+import com.bytecore.vitalcare.platform.iam.infrastructure.security.UserDetailsImpl;
 import com.bytecore.vitalcare.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,38 +31,20 @@ public class AlertsController {
     }
 
     @GetMapping
-    public ResponseEntity<List<AlertResource>> getAlerts(
-            @RequestParam(required = false) Long userId,
-            @RequestParam(required = false) Long patientId) {
-
-        List<AlertResource> alerts;
-
-        if (userId != null) {
-            alerts = alertQueryService.handle(new GetAlertsByUserIdQuery(userId))
-                    .stream()
-                    .map(AlertResourceFromEntityAssembler::toResourceFromEntity)
-                    .toList();
-        } else if (patientId != null) {
-            alerts = alertQueryService.handle(new GetAlertsByPatientIdQuery(patientId))
-                    .stream()
-                    .map(AlertResourceFromEntityAssembler::toResourceFromEntity)
-                    .toList();
-        } else {
-            alerts = alertQueryService.handle(new GetAllAlertsQuery())
-                    .stream()
-                    .map(AlertResourceFromEntityAssembler::toResourceFromEntity)
-                    .toList();
-        }
-
+    public ResponseEntity<List<AlertResource>> getAlerts(@AuthenticationPrincipal UserDetailsImpl user) {
+        var alerts = alertQueryService.handle(new GetAlertsByUserIdQuery(user.getId()))
+                .stream()
+                .map(AlertResourceFromEntityAssembler::toResourceFromEntity)
+                .toList();
         return ResponseEntity.ok(alerts);
     }
 
     @GetMapping("/{alertId}")
-    public ResponseEntity<?> getAlertById(@PathVariable Long alertId) {
-        var query = new GetAlertByIdQuery(alertId);
-        var result = alertQueryService.handle(query);
+    public ResponseEntity<?> getAlertById(@PathVariable Long alertId,
+                                          @AuthenticationPrincipal UserDetailsImpl user) {
+        var result = alertQueryService.handle(new GetAlertByIdQuery(alertId));
 
-        if (result.isEmpty()) {
+        if (result.isEmpty() || !result.get().getUserId().equals(user.getId())) {
             return ResponseEntity.notFound().build();
         }
 

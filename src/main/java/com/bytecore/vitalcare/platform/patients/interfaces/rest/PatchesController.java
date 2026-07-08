@@ -2,20 +2,24 @@ package com.bytecore.vitalcare.platform.patients.interfaces.rest;
 
 import com.bytecore.vitalcare.platform.patients.application.commandservices.PatchCommandService;
 import com.bytecore.vitalcare.platform.patients.application.queryservices.PatchQueryService;
+import com.bytecore.vitalcare.platform.patients.application.queryservices.PatientQueryService;
 import com.bytecore.vitalcare.platform.patients.domain.model.commands.DeletePatchCommand;
 import com.bytecore.vitalcare.platform.patients.domain.model.commands.LinkPatchCommand;
 import com.bytecore.vitalcare.platform.patients.domain.model.commands.UpdatePatchCommand;
 import com.bytecore.vitalcare.platform.patients.domain.model.queries.GetPatchByIdQuery;
 import com.bytecore.vitalcare.platform.patients.domain.model.queries.GetPatchesByPatientIdQuery;
+import com.bytecore.vitalcare.platform.patients.domain.model.queries.GetPatientByIdQuery;
 import com.bytecore.vitalcare.platform.patients.domain.model.valueobjects.PatchStatus;
 import com.bytecore.vitalcare.platform.patients.interfaces.rest.resources.CreatePatchResource;
 import com.bytecore.vitalcare.platform.patients.interfaces.rest.resources.PatchResource;
 import com.bytecore.vitalcare.platform.patients.interfaces.rest.transform.PatchResourceFromEntityAssembler;
+import com.bytecore.vitalcare.platform.iam.infrastructure.security.UserDetailsImpl;
 import com.bytecore.vitalcare.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -28,14 +32,28 @@ public class PatchesController {
 
     private final PatchCommandService commandService;
     private final PatchQueryService queryService;
+    private final PatientQueryService patientQueryService;
 
-    public PatchesController(PatchCommandService commandService, PatchQueryService queryService) {
+    public PatchesController(PatchCommandService commandService, PatchQueryService queryService,
+                             PatientQueryService patientQueryService) {
         this.commandService = commandService;
         this.queryService = queryService;
+        this.patientQueryService = patientQueryService;
+    }
+
+    /** True only if the given patient exists and belongs to the authenticated user. */
+    private boolean ownsPatient(Long patientId, Long userId) {
+        return patientQueryService.handle(new GetPatientByIdQuery(patientId))
+                .filter(p -> p.getUserId().equals(userId))
+                .isPresent();
     }
 
     @GetMapping
-    public ResponseEntity<List<PatchResource>> getByPatientId(@RequestParam Long patients_id) {
+    public ResponseEntity<List<PatchResource>> getByPatientId(@RequestParam Long patients_id,
+                                                              @AuthenticationPrincipal UserDetailsImpl user) {
+        if (!ownsPatient(patients_id, user.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         var patches = queryService.handle(new GetPatchesByPatientIdQuery(patients_id)).stream()
                 .map(PatchResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
@@ -43,8 +61,10 @@ public class PatchesController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PatchResource> getById(@PathVariable Long id) {
+    public ResponseEntity<PatchResource> getById(@PathVariable Long id,
+                                                 @AuthenticationPrincipal UserDetailsImpl user) {
         return queryService.handle(new GetPatchByIdQuery(id))
+                .filter(p -> ownsPatient(p.getPatientId(), user.getId()))
                 .map(p -> ResponseEntity.ok(PatchResourceFromEntityAssembler.toResourceFromEntity(p)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

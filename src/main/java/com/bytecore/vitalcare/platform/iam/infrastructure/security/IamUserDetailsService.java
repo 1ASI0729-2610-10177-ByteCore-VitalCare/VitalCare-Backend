@@ -20,10 +20,6 @@ public class IamUserDetailsService implements UserDetailsService {
         var user = this.userRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: %s".formatted(username)));
 
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                .password(user.getPassword())
-                .roles("USER")
-                .build();
+        return new UserDetailsImpl(user.getId(), user.getEmail(), user.getPassword());
     }
 }

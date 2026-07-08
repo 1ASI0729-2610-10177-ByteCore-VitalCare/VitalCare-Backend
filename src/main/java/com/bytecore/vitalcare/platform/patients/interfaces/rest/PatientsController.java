@@ -11,11 +11,13 @@ import com.bytecore.vitalcare.platform.patients.interfaces.rest.resources.Create
 import com.bytecore.vitalcare.platform.patients.interfaces.rest.resources.PatientResource;
 import com.bytecore.vitalcare.platform.patients.interfaces.rest.transform.CreatePatientCommandFromResourceAssembler;
 import com.bytecore.vitalcare.platform.patients.interfaces.rest.transform.PatientResourceFromEntityAssembler;
+import com.bytecore.vitalcare.platform.iam.infrastructure.security.UserDetailsImpl;
 import com.bytecore.vitalcare.platform.shared.interfaces.rest.transform.ResponseEntityAssembler;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -35,16 +37,18 @@ public class PatientsController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PatientResource>> getPatients(@RequestParam Long users_id) {
-        var patients = queryService.handle(new GetPatientsByUserIdQuery(users_id)).stream()
+    public ResponseEntity<List<PatientResource>> getPatients(@AuthenticationPrincipal UserDetailsImpl user) {
+        var patients = queryService.handle(new GetPatientsByUserIdQuery(user.getId())).stream()
                 .map(PatientResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
         return ResponseEntity.ok(patients);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PatientResource> getPatientById(@PathVariable Long id) {
+    public ResponseEntity<PatientResource> getPatientById(@PathVariable Long id,
+                                                          @AuthenticationPrincipal UserDetailsImpl user) {
         return queryService.handle(new GetPatientByIdQuery(id))
+                .filter(p -> p.getUserId().equals(user.getId()))
                 .map(p -> ResponseEntity.ok(PatientResourceFromEntityAssembler.toResourceFromEntity(p)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

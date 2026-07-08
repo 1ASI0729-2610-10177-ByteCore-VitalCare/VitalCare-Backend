@@ -34,16 +34,6 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
                                 "/api/v1/authentication/**",
-                                "/api/v1/user_preferences/**",
-                                "/api/v1/users/**",
-                                "/api/v1/support_tickets/**",
-                                "/api/v1/patients/**",
-                                "/api/v1/patches/**",
-                                "/api/v1/vital_signs/**",
-                                "/api/v1/locations/**",
-                                "/api/v1/notifications/**",
-                                "/api/v1/subscriptions/**",
-                                "/api/v1/alerts/**",
                                 "/error",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
