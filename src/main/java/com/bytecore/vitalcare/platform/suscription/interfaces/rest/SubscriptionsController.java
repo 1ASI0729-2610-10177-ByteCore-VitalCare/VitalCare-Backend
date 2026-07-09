@@ -10,6 +10,7 @@ import com.bytecore.vitalcare.platform.suscription.domain.model.queries.GetSubsc
 import com.bytecore.vitalcare.platform.suscription.domain.model.valueobjects.SubscriptionPlan;
 import com.bytecore.vitalcare.platform.suscription.interfaces.rest.resources.CreateSubscriptionResource;
 import com.bytecore.vitalcare.platform.suscription.interfaces.rest.resources.SubscriptionResource;
+import com.bytecore.vitalcare.platform.suscription.interfaces.rest.resources.UpdateSubscriptionPlanResource;
 import com.bytecore.vitalcare.platform.suscription.interfaces.rest.transform.CreateSubscriptionCommandFromResourceAssembler;
 import com.bytecore.vitalcare.platform.suscription.interfaces.rest.transform.SubscriptionResourceFromEntityAssembler;
 import com.bytecore.vitalcare.platform.iam.infrastructure.security.UserDetailsImpl;
@@ -22,9 +23,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/api/v1/subscriptions", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -70,7 +69,7 @@ public class SubscriptionsController {
     @PatchMapping("/{id}")
     @Operation(summary = "Update subscription plan and price")
     public ResponseEntity<?> updateSubscriptionPlan(@PathVariable Long id,
-                                                    @RequestBody Map<String, Object> body,
+                                                    @RequestBody UpdateSubscriptionPlanResource resource,
                                                     @AuthenticationPrincipal UserDetailsImpl user) {
         var owns = subscriptionQueryService.handle(new GetSubscriptionByIdQuery(id))
                 .filter(s -> s.getUserId().equals(user.getId()))
@@ -78,9 +77,8 @@ public class SubscriptionsController {
         if (!owns) {
             return ResponseEntity.notFound().build();
         }
-        var plan = SubscriptionPlan.valueOf(body.get("plan").toString().toUpperCase());
-        var price = new BigDecimal(body.get("price").toString());
-        var command = new UpdateSubscriptionPlanCommand(id, plan, price);
+        var plan = SubscriptionPlan.valueOf(resource.plan().toUpperCase());
+        var command = new UpdateSubscriptionPlanCommand(id, plan, resource.price());
         var result = subscriptionCommandService.handle(command);
         return ResponseEntityAssembler.toResponseEntityFromResult(
                 result,
